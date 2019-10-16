@@ -6,7 +6,9 @@ from event_loop import get_loop
 from handler import Handler
 from utils import _merge_prefix
 BUFFER_SIZE = 4096
-class connection():
+''' warpper the socket function  include support the read/write data buffer from the socket
+'''
+class Connection():
 	def __init__(self,client_socket):
 		self._read_buffer = collections.deque()
 		self._read_buffer_size = 0

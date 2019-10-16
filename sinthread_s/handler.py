@@ -1,5 +1,7 @@
 from protocol import protocol
-
+'''this class process the data by protocol parse main purpose can be inherit 
+so can process diffent logic
+'''
 class Handler():
 	def __init__(self,conn):
 		self.protocol = protocol(conn)

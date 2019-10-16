@@ -1,3 +1,4 @@
+'''from the duque get specify length data otherwise return none'''
 def _merge_prefix(deque,loc):
 	if len(deque) > 0:
 		sum_data_index = 0

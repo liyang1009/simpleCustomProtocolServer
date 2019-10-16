@@ -1,8 +1,9 @@
 import socket
 import select
-from connection import connection
+from connection import Connection
 from event_loop import get_loop
-
+'''warpper the accept/bin/listen
+'''
 class server():
 	def __init__(self):
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,7 +18,7 @@ class server():
 	def accept(self):	
 		conn_socket,client_address = self.socket.accept() 	
 		conn_socket.setblocking(0)
-		client = connection(conn_socket)
+		client = Connection(conn_socket)
 		client.begin()
 
 	def handler_event(self,event):

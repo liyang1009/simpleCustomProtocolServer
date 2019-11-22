@@ -10,6 +10,7 @@ class EventLoop():
 		self.event_handler[fd] = handler
 		
 	def delEvent(self,fd):
+		self.server.remove_fd(fd)
 		self.poll.unregister(fd)
 
 	#run the event hanler indefinite	
@@ -22,7 +23,11 @@ class EventLoop():
 	
 	def modifyEvent(self,fd,event):
 		self.poll.modify(fd,event)
-
+	
+	def start_server(self,server):
+		self.server = server 
+		self.run_event_loop()
+		
 eventloop = EventLoop()	
 def get_loop():
 	global eventloop

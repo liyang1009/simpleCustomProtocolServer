@@ -1,11 +1,11 @@
-from server import server
 from event_loop import  get_loop 
+from server import server
 
 def main():
 	ss = server()
-	server_address = ("0.0.0.0",50000)
+	server_address = ("",50000)
 	ss.bind(server_address)
-	get_loop().run_event_loop()
+	get_loop().start_server(ss)
 
 if __name__ == "__main__":
 	main()

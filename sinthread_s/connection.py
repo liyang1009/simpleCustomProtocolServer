@@ -1,14 +1,18 @@
 import Queue
 import collections
 import select
+import pdb
+import time
 from collections import deque
 from event_loop import get_loop
 from handler import Handler
-from utils import _merge_prefix
+from utils import merge_prefix
+from periodic_thread import *
+
 BUFFER_SIZE = 4096
-''' warpper the socket function  include support the read/write data buffer from the socket
-'''
+
 class Connection():
+	'''the client warpper include socket all kinds of buffer and periodc ping'''
 	def __init__(self,client_socket):
 		self._read_buffer = collections.deque()
 		self._read_buffer_size = 0
@@ -17,30 +21,42 @@ class Connection():
 		self.read_buffer = deque()
 		self.write_buffer = Queue.Queue()
 		self.header = None
+		self.period = None
+		self.last_active_time  = None
+
 	def begin(self):
 		get_loop().addEvent(self.fd,select.EPOLLIN,self)
+		self.ping_timer()
+
 	def read(self):
 		read_data = self.socket.recv(BUFFER_SIZE)
 		if read_data <= 0:
 			self.close()
 			return 0
-		#pdb.set_trace()
 		self.read_buffer.append(read_data)
 		self._read_buffer_size += len(read_data)
-		#print(self._read_buffer_size)
-		#here is execute the business logic
-		get_loop().modifyEvent(self.socket,select.POLLOUT)
+		#here is the place where execute the business logic
+		self.last_active_time = time.time()
 		handler = Handler(self)
 		handler.execute()
-		
+
+	def ping_timer(self):
+		self.period = PeriodicThread(self.ping,20)	
+		self.period.start()
+
+	def ping(self):
+		h = Handler(self)
+		h.ping()
+
 	def read_from_buffer(self,size):
-		return _merge_prefix(self.read_buffer,size)
+		return merge_prefix(self.read_buffer,size)
 			
 	def write_to_buffer(self,buf):
-		
-		# write_data = self.write_package_handler(buf)
-		#print(buf)
-		self.write_buffer.put(buf)
+		try:
+			get_loop().modifyEvent(self.socket,select.POLLOUT)
+			self.write_buffer.put(buf)
+		except Exception as e:
+			self.close()
 
 	def handler_event(self,event):
 		if event == select.POLLIN:
@@ -49,23 +65,27 @@ class Connection():
 			self.write_from_buffer()
 		elif event==select.POLLERR:
 			self.close()
+		else:
+			print(event)
+			self.close()
 
-			
 	def write_from_buffer(self):
 		get_loop().modifyEvent(self.socket,select.EPOLLIN)
+		write_data = None
 		try:
 			write_data = self.write_buffer.get_nowait()
 		except Queue.Empty as e:
 			pass	
 		if write_data:
 			try:
-				write_status = self.socket.send(write_data)
-				if write_status < 0:
-					self.close()	
-			except socket.error as e:
+				self.socket.sendall(write_data)
+			except Exception as e:
 				self.close()
 
 	def close(self):
+		#pdb.set_trace()
 		get_loop().delEvent(self.fd)
 		self.socket.close()
+		self.period.cancel()
+		print("the socket is close")
 		

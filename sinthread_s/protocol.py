@@ -1,13 +1,16 @@
 import struct
 
-'''parse the data conform the protocol specification
-type:length:value '''
 
 HEADER_SIZE = 8
-class protocol:
+class protocol():
+	'''parse the data conform the protocol specification
+	   type:length:value 
+	'''
 	def __init__(self,conn):
 		self.conn = conn	
+
 	def get_data(self):
+		'''parse the pure byte stream to frame'''
 		if not self.conn.header:
 			self.conn.header = self.conn.read_from_buffer(HEADER_SIZE)
 			if self.conn.header:
@@ -19,6 +22,7 @@ class protocol:
 					return data
 			
 	def set_data(self,data_type,data):
+		'''convert the frame data to pure byte stream'''
 		sended_data = []
 		data_len = len(data)
 		val_len = struct.pack('!i', data_len)
@@ -27,7 +31,6 @@ class protocol:
 		sended_data.append(val_len)
 		sended_data.append(data)
 		self.conn.write_to_buffer(''.join(sended_data))
-		#parse the protocol and the return the data to the channel
 		
 		
 

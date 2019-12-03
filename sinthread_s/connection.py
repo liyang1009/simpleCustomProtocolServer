@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import Queue
 import collections
 import select
@@ -10,6 +11,7 @@ from utils import merge_prefix
 from periodic_thread import *
 
 BUFFER_SIZE = 4096
+PING_TIMOUT_STEP  = 20
 
 class Connection():
 	'''the client warpper include socket all kinds of buffer and periodc ping'''
@@ -35,13 +37,13 @@ class Connection():
 			return 0
 		self.read_buffer.append(read_data)
 		self._read_buffer_size += len(read_data)
-		#here is the place where execute the business logic
 		self.last_active_time = time.time()
+		#here is the place where execute the business logic
 		handler = Handler(self)
 		handler.execute()
 
 	def ping_timer(self):
-		self.period = PeriodicThread(self.ping,20)	
+		self.period = PeriodicThread(self.ping,PING_TIMOUT_STEP)	
 		self.period.start()
 
 	def ping(self):
@@ -83,7 +85,6 @@ class Connection():
 				self.close()
 
 	def close(self):
-		#pdb.set_trace()
 		get_loop().delEvent(self.fd)
 		self.socket.close()
 		self.period.cancel()
